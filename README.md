@@ -3,7 +3,12 @@ compiladores
 
 Compiladores FPUNA
 
-Autor: Julio Paciello
+Autor: Walter Torales
 
-Para compilar: gcc anlex.c tablaSimbolos.c -o anlex
+Analizador Lexico para JSON simplificado.
 
+Para compilar: gcc anlex.c -o anlex
+
+Uso: ./anlex <archivo_fuente> <archivo_salida>
+
+Ejemplo: ./anlex fuente.txt output.txt
