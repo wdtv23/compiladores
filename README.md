@@ -149,7 +149,124 @@ Cuando el parser encuentra un token inesperado:
 anlex.h       — Códigos de tokens (compartido, sin modificar)
 anlex.c       — Analizador léxico Tarea 1 (sin modificar)
 parser.c      — Lexer adaptado + parser sintáctico Tarea 2
+traductor.c   — Lexer + parser + traductor TDS Tarea 3
 fuente.txt    — JSON de prueba Tarea 1
-fuente.json   — JSON de prueba Tarea 2
-Makefile      — Compila ambos programas
+fuente.json   — JSON de prueba Tareas 2 y 3
+Makefile      — Compila los tres programas
+```
+
+---
+
+## Tarea 3 — Traductor Dirigido por Sintaxis JSON → XML
+
+Extiende el parser de la Tarea 2 con **acciones semánticas** integradas
+directamente en las funciones recursivas del parser para emitir XML equivalente.
+No construye un AST intermedio: la traducción se produce en un único recorrido
+descendente (segundo pase).
+
+### Estrategia de dos pases
+
+| Pase | Objetivo | Salida |
+|------|----------|--------|
+| 1 | Análisis sintáctico puro (idéntico a Tarea 2) | Mensajes de error en consola |
+| 2 | Traducción con acciones semánticas `trad_*` | Archivo XML |
+
+Si el pase 1 detecta errores, **el pase 2 no se ejecuta** y no se genera ningún
+archivo XML.
+
+### Reglas de traducción implementadas
+
+| Construcción JSON | Salida XML |
+|---|---|
+| Objeto raíz `{k:v, …}` | Las claves se emiten como tags de nivel raíz (sin wrapper extra) |
+| Array raíz `[e, …]` | Cada elemento envuelto en `<item>…</item>` |
+| Atributo con valor primitivo | `<nombre>valor</nombre>` |
+| Atributo con valor objeto | `<nombre>` + atributos del objeto + `</nombre>` |
+| Atributo con array vacío | `<nombre></nombre>` |
+| Atributo con array no vacío | `<nombre>` + `<item>…</item>` por elemento + `</nombre>` |
+| Elemento de array que es objeto | `<item>` + atributos del objeto + `</item>` |
+| Elemento de array que es array | `<item>` + items anidados + `</item>` |
+| Elemento de array primitivo | `<item>valor</item>` |
+| Strings | Se conservan las comillas dobles: `"Julio Pérez"` |
+
+### Compilar
+
+```
+make traductor
+```
+o directamente:
+```
+gcc -Wall -Wextra -std=c11 -o traductor traductor.c
+```
+
+### Uso
+
+```
+./traductor <fuente.json> <output.xml>
+```
+
+### Ejemplo
+
+**Entrada (`fuente.json`):**
+```json
+{
+  "personas": [
+    { "ci": 1234567, "nombre": "Julio Pérez", "casado": false, "hijos": [] },
+    { "ci": 7654321, "nombre": "Juan Gómez", "casado": true,
+      "hijos": [
+        { "nombre": "Jorge", "edad": 18 },
+        { "nombre": "Valeria", "edad": 16 }
+      ]
+    }
+  ]
+}
+```
+
+**Salida (`output.xml`):**
+```xml
+<personas>
+	<item>
+		<ci>1234567</ci>
+		<nombre>"Julio Pérez"</nombre>
+		<casado>false</casado>
+		<hijos></hijos>
+	</item>
+	<item>
+		<ci>7654321</ci>
+		<nombre>"Juan Gómez"</nombre>
+		<casado>true</casado>
+		<hijos>
+			<item>
+				<nombre>"Jorge"</nombre>
+				<edad>18</edad>
+			</item>
+			<item>
+				<nombre>"Valeria"</nombre>
+				<edad>16</edad>
+			</item>
+		</hijos>
+	</item>
+</personas>
+```
+
+### Salida ante errores
+
+Si el JSON tiene errores sintácticos, el traductor los reporta (igual que el
+parser de la Tarea 2) y **no genera el archivo XML**:
+
+```
+Lin 1, Col 9: Error Sintactico. Se esperaba ':' pero se encontro cadena ('"b"').
+Se encontraron 1 error(es). No se genero el archivo XML.
+```
+
+### Estructura de archivos
+
+```
+anlex.h       — Códigos de tokens (compartido, sin modificar)
+anlex.c       — Analizador léxico Tarea 1 (sin modificar)
+parser.c      — Lexer adaptado + parser sintáctico Tarea 2
+traductor.c   — Lexer + parser + traductor TDS Tarea 3
+fuente.txt    — JSON de prueba Tarea 1
+fuente.json   — JSON de prueba Tareas 2 y 3
+Makefile      — Compila los tres programas
 ```
